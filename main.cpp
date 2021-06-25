@@ -250,31 +250,54 @@ bool generateVirtualTomcat(const std::string &region) {
         return false;
     }
 
-    // copy conf/ files
+    // 确认/conf下的配置文件
 #if defined(WINDOWS)
     std::string tomcatConf = tomcatLocation + "\\conf\\";
 #elif defined(UNIX) || defined(LINUX)
     std::string tomcatConf = tomcatLocation + "/webapps/";
 #endif
     for (auto &confFileName : CONF_COPY_FILE) {
-        // copy while targetConfFile not exist
+        std::string sourceConfFile = tomcatConf + confFileName;
         std::string targetConfFile = targetConf + confFileName;
-        if (!fileExist(targetConfFile) && !copyFile(tomcatConf + confFileName, targetConfFile)) {
-            std::cout << "[Error] copy file failed: " << confFileName;
-            return false;
+        // 文件不存在或文件不一致
+        if (!fileExist(targetConfFile) || !sameFile(sourceConfFile, targetConfFile)) {
+            // 复制文件
+            if (!copyFile(sourceConfFile, targetConfFile)) {
+                std::cout << "[Error] copy file failed: " << confFileName;
+                return false;
+            }
         }
     }
 
-    // copy appframe.war
-    if (!copyFile(warFile, targetWebapps + "appframe.war")) {
-        std::cout << "[Error] copy appframe package failed: " << warFile;
-        return false;
+    // 检查war包
+    char aMd5[MD5_STRING_SIZE + 1];
+    char bMd5[MD5_STRING_SIZE + 1];
+    std::string targetWarPath = targetWebapps + "appframe.war";
+    // war包不存在
+    if (!fileExist(targetWarPath)) {
+        if (!copyFile(warFile, targetWebapps + "appframe.war")) {
+            std::cout << "[Error] copy appframe package failed: " << warFile;
+            return false;
+        }
+    }
+    // war包存在但不相同
+    else if (!sameFile(warFile, targetWarPath, aMd5, bMd5)) {
+        std::cout << "[Info] appframe file was changed." << std::endl;
+        printKeyValue("\tSource War MD5", aMd5);
+        printKeyValue("\tTarget War MD5", bMd5);
+        if (!copyFile(warFile, targetWebapps + "appframe.war")) {
+            std::cout << "[Error] copy appframe package failed: " << warFile;
+            return false;
+        }
     }
 
     // create server.xml
     std::string serverXml = generateServerXml(targetWebapps, tomcatShutdownPort, tomcatHttpPort);
     std::string targetServerXmlPath = targetDirectory + TOMCAT_SERVER_XML;
     FILE *serverXmlFile = fopen(targetServerXmlPath.c_str(), "wb");
+    if (serverXmlFile == nullptr) {
+        std::cout << "[Error] create server.xml failed." << std::endl;
+    }
     fwrite(serverXml.c_str(), 1, serverXml.length(), serverXmlFile);
     fclose(serverXmlFile);
     return true;
