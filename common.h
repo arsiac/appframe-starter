@@ -11,6 +11,12 @@
 #include <cstdio>
 #include <sys/stat.h>
 #include <direct.h>
+#include "md5.h"
+
+#define WINDOWS
+#define MD5_BUFFER_SIZE 1024
+#define MD5_VALUE_SIZE 16
+#define MD5_STRING_SIZE 32
 
 /**
  * 是否为空白
@@ -155,6 +161,85 @@ bool copyFile(const std::string &src, const std::string &dest) {
     fclose(srcFile);
     fclose(destFile);
     return true;
+}
+
+/**
+ * 计算文件MD5
+ *
+ * @param path 文件路径
+ * @param md5Str MD5
+ * @return 是否成功
+ */
+bool fileMd5(const std::string &path, char *md5Str) {
+    unsigned char buffer[MD5_BUFFER_SIZE];
+    unsigned char md5Value[MD5_VALUE_SIZE];
+    MD5_CTX md5;
+
+    FILE *file = fopen(path.c_str(), "rb");
+    if (file == nullptr) {
+        std::cout << "[Error] MD5: open file failed[" << path << "]." << std::endl;
+        return false;
+    }
+
+    MD5Init(&md5);
+
+    unsigned long readCount;
+    while (true) {
+        readCount = fread(buffer, 1, MD5_BUFFER_SIZE, file);
+        if (-1 == readCount) {
+            std::cout << "[Error] MD5: read file failed[" << path << "]." << std::endl;
+            return false;
+        }
+
+        MD5Update(&md5, buffer, readCount);
+
+        if (0 == readCount || readCount < MD5_BUFFER_SIZE) {
+            break;
+        }
+    }
+    fclose(file);
+    MD5Final(&md5, md5Value);
+    for (int i = 0; i < MD5_VALUE_SIZE; i++) {
+        snprintf(md5Str + i * 2, 2 + 1, "%02x", md5Value[i]);
+    }
+    md5Str[MD5_STRING_SIZE] = '\0';
+    return true;
+}
+
+/**
+ * 文件是否相同
+ *
+ * @param fileA a文件路径
+ * @param fileB b文件路径
+ * @param aMd5 a文件md5
+ * @param bMd5 b文件md5
+ * @return 是否相同
+ */
+bool sameFile(const std::string &fileA,
+              const std::string &fileB,
+              char *aMd5,
+              char *bMd5) {
+    if (!fileMd5(fileA, aMd5)) {
+        return false;
+    }
+
+    if (!fileMd5(fileB, bMd5)) {
+        return false;
+    }
+    return 0 == strcmp(aMd5, bMd5);
+}
+
+/**
+ * 文件是否相同
+ *
+ * @param fileA a文件路径
+ * @param fileB b文件路径
+ * @return 是否相同
+ */
+bool sameFile(const std::string &fileA, const std::string &fileB) {
+    char aMd5[MD5_STRING_SIZE + 1];
+    char bMd5[MD5_STRING_SIZE + 1];
+    return sameFile(fileA, fileB, aMd5, bMd5);
 }
 
 /**
