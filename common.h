@@ -151,7 +151,7 @@ size_t fileSize(FILE *file) {
  */
 bool copyFile(const std::string &src, const std::string &dest) {
     if (enableDebug) {
-        std::cout << "[Debug] copy: " << src << ", " << dest << std::endl;
+        std::cout << "[Debug] copy: " << src << " to " << dest << std::endl;
     }
     FILE *srcFile = fopen(src.c_str(), "rb");
     if (srcFile == nullptr) {
