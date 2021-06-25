@@ -76,6 +76,10 @@ void checkNoRequired(Properties *properties, const char *key, std::string &value
                       << defaultValue << std::endl;
         }
         value = defaultValue;
+    } else {
+        if (enableDebug) {
+            std::cout << "[DEBUG] " << key << ": " << value << std::endl;
+        }
     }
 }
 
@@ -91,10 +95,10 @@ bool checkCommonConfiguration(Properties *properties) {
     checkNoRequired(properties, COMMON_DEBUG_ENABLE, enableDebugStr, "true");
     if (enableDebugStr == "true") {
         enableDebug = true;
-        std::cout << "[ INFO] enable debug." << std::endl;
+        std::cout << "[INFO ] enable debug." << std::endl;
     } else if (enableDebugStr == "false") {
         enableDebug = false;
-        std::cout << "[ INFO] disable debug." << std::endl;
+        std::cout << "[INFO ] disable debug." << std::endl;
     } else {
         std::cout << "[ERROR] " << COMMON_DEBUG_ENABLE
                   << " cannot be " << enableDebugStr
@@ -165,16 +169,6 @@ bool checkCommonConfiguration(Properties *properties) {
  * @return 是否符合要求
  */
 bool checkArguments(int argc, char *argv[], Properties *properties) {
-    if (argc == 1) {
-        std::cout << "[ERROR] please enter the region of appFrame." << std::endl;
-        return false;
-    }
-
-    if (argc > 2) {
-        std::cout << "[ERROR] too much arguments." << std::endl;
-        return false;
-    }
-
     // key prefix
     std::string regionName = argv[1];
     if (enableDebug) {
@@ -335,7 +329,7 @@ bool generateVirtualTomcat(const std::string &region) {
     }
         // war包存在但不相同
     else if (!sameFile(warFile, targetWarPath, aMd5, bMd5)) {
-        std::cout << "[ INFO] appframe package was changed: " << warFile << std::endl;
+        std::cout << "[INFO ] appframe package was changed: " << warFile << std::endl;
         printKeyValue("\tSource War MD5", aMd5);
         printKeyValue("\tTarget War MD5", bMd5);
         if (!copyFile(warFile, targetWebapps + "appframe.war")) {
@@ -360,6 +354,16 @@ bool generateVirtualTomcat(const std::string &region) {
 }
 
 int main(int argc, char *argv[]) {
+    if (argc == 1) {
+        std::cout << "[ERROR] please enter the region of appframe." << std::endl;
+        return 1;
+    }
+
+    if (argc > 2) {
+        std::cout << "[ERROR] too much arguments." << std::endl;
+        return 1;
+    }
+
     char *cwdDir = new char[MAX_PATH_LENGTH];
 
 #if defined(WINDOWS)
@@ -407,7 +411,7 @@ int main(int argc, char *argv[]) {
 
     // run virtual tomcat
     std::string command = generateCommand(javaHome, tomcatLocation, targetDirectory, javaOptions, bsHomeDirectory);
-    std::cout << "[ INFO] COMMAND: " << command << std::endl << std::endl
+    std::cout << "[INFO ] COMMAND: " << command << std::endl << std::endl
               << "=========== VIRTUAL TOMCAT ===========" << std::endl;
     system(command.c_str());
     return 0;

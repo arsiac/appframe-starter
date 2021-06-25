@@ -58,7 +58,7 @@ std::string convent2string(const char *value) {
  * @param endLine 是否换行
  */
 void printKeyValue(const char *key, const std::string &value, bool endLine = true) {
-    std::cout << "[ INFO] " << key << ": ";
+    std::cout << "[INFO ] " << key << ": ";
 
     if (value.empty()) {
         std::cout << "\"\"";
@@ -151,7 +151,7 @@ size_t fileSize(FILE *file) {
  */
 bool copyFile(const std::string &src, const std::string &dest) {
     if (enableDebug) {
-        std::cout << "[Debug] copy: " << src << " to " << dest << std::endl;
+        std::cout << "[Debug] copy " << src << " to " << dest << std::endl;
     }
     FILE *srcFile = fopen(src.c_str(), "rb");
     if (srcFile == nullptr) {
