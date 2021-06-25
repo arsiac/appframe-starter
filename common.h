@@ -109,9 +109,14 @@ bool checkDirectory(const std::string &path) {
     if (enableDebug) {
         std::cout << "[Debug] check directory: " << path << std::endl;
     }
-    if (!fileExist(path) && -1 == mkdir(path.c_str())) {
-        std::cout << "[Error] create folder failed: " << path << std::endl;
-        return false;
+    if (!fileExist(path)) {
+        if (enableDebug) {
+            std::cout << "[Debug] directory not exist, try create: " << path << std::endl;
+        }
+        if (-1 == mkdir(path.c_str())) {
+            std::cout << "[Error] create folder failed: " << path << std::endl;
+            return false;
+        }
     }
     return true;
 }

@@ -73,7 +73,7 @@ void checkNoRequired(Properties *properties, const char *key, std::string &value
     if (isBlank(value)) {
         if (enableDebug) {
             std::cout << "[DEBUG] " << key << " not found, use default value: "
-            << defaultValue << std::endl;
+                      << defaultValue << std::endl;
         }
         value = defaultValue;
     }
@@ -409,6 +409,6 @@ int main(int argc, char *argv[]) {
     std::string command = generateCommand(javaHome, tomcatLocation, targetDirectory, javaOptions, bsHomeDirectory);
     std::cout << "[ INFO] COMMAND: " << command << std::endl << std::endl
               << "=========== VIRTUAL TOMCAT ===========" << std::endl;
-    // system(command.c_str());
+    system(command.c_str());
     return 0;
 }
