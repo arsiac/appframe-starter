@@ -8,6 +8,8 @@ appframe-stater [region]
 ### Configuration
 - location: ./appframe-stater.conf
 ```shell
+#default: true
+common.debug.enable=true
 # default: JAVA_HOME
 common.java.home=/path/to/java
 
