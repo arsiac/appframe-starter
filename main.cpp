@@ -71,15 +71,11 @@ bool checkEnv(const char *name, Properties *properties, const char *key, std::st
 void checkNoRequired(Properties *properties, const char *key, std::string &value, const char *defaultValue) {
     value = convent2string(properties->get(key));
     if (isBlank(value)) {
-        if (enableDebug) {
-            std::cout << "[DEBUG] " << key << " not found, use default value: "
-                      << defaultValue << std::endl;
-        }
+        std::cout << "[INFO ] " << key << " not found, use default value: "
+                  << defaultValue << std::endl;
         value = defaultValue;
     } else {
-        if (enableDebug) {
-            std::cout << "[DEBUG] " << key << ": " << value << std::endl;
-        }
+        std::cout << "[INFO ] " << key << ": " << value << std::endl;
     }
 }
 
@@ -95,10 +91,8 @@ bool checkCommonConfiguration(Properties *properties) {
     checkNoRequired(properties, COMMON_DEBUG_ENABLE, enableDebugStr, "true");
     if (enableDebugStr == "true") {
         enableDebug = true;
-        std::cout << "[INFO ] enable debug." << std::endl;
     } else if (enableDebugStr == "false") {
         enableDebug = false;
-        std::cout << "[INFO ] disable debug." << std::endl;
     } else {
         std::cout << "[ERROR] " << COMMON_DEBUG_ENABLE
                   << " cannot be " << enableDebugStr
