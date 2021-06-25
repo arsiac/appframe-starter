@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
-project(appframe_starter)
+project(appframe-starter)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -13,13 +13,13 @@ add_library(lib_properties
 
 
 ### appframe starter
-add_executable(appframe_starter afdef.h common.h main.cpp)
+add_executable(appframe-starter afdef.h common.h main.cpp)
 
-target_include_directories(appframe_starter
+target_include_directories(appframe-starter
         PRIVATE
         ${PROJECT_SOURCE_DIR}/common)
 
-target_link_libraries(appframe_starter
+target_link_libraries(appframe-starter
         PRIVATE
         lib_md5
         lib_properties)
