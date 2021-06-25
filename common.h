@@ -18,6 +18,8 @@
 #define MD5_VALUE_SIZE 16
 #define MD5_STRING_SIZE 32
 
+bool enableDebug = true;
+
 /**
  * 是否为空白
  *
@@ -56,7 +58,7 @@ std::string convent2string(const char *value) {
  * @param endLine 是否换行
  */
 void printKeyValue(const char *key, const std::string &value, bool endLine = true) {
-    std::cout << key << ": ";
+    std::cout << "[ INFO] " << key << ": ";
 
     if (value.empty()) {
         std::cout << "\"\"";
@@ -104,6 +106,9 @@ bool isDirectory(const std::string &path) {
  * @return 文件夹不存在且创建失败
  */
 bool checkDirectory(const std::string &path) {
+    if (enableDebug) {
+        std::cout << "[Debug] check directory: " << path << std::endl;
+    }
     if (!fileExist(path) && -1 == mkdir(path.c_str())) {
         std::cout << "[Error] create folder failed: " << path << std::endl;
         return false;
@@ -140,7 +145,9 @@ size_t fileSize(FILE *file) {
  * @return 是否成功
  */
 bool copyFile(const std::string &src, const std::string &dest) {
-
+    if (enableDebug) {
+        std::cout << "[Debug] copy: " << src << ", " << dest << std::endl;
+    }
     FILE *srcFile = fopen(src.c_str(), "rb");
     if (srcFile == nullptr) {
         std::cout << "[Error] file not exist: " << src << std::endl;

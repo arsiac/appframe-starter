@@ -21,6 +21,9 @@ const char *TOMCAT_SERVER_XML = "\\conf\\server.xml";
 const char *TOMCAT_SERVER_XML = "/conf/server.xml";
 #endif
 
+// default: true
+const char *COMMON_DEBUG_ENABLE = "common.debug.enable";
+
 // default: JAVA_HOME
 const char *COMMON_JAVA_HOME = "common.java.home";
 

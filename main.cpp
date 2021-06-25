@@ -42,6 +42,9 @@ bool checkEnv(const char *name, Properties *properties, const char *key, std::st
     // check configuration
     value = convent2string(properties->get(key));
     if (isBlank(value)) {
+        if (enableDebug) {
+            std::cout << "[DEBUG] " << key << " not found." << std::endl;
+        }
         // check environment variable
         value = convent2string(getenv(name));
         if (isBlank(value)) {
@@ -68,7 +71,10 @@ bool checkEnv(const char *name, Properties *properties, const char *key, std::st
 void checkNoRequired(Properties *properties, const char *key, std::string &value, const char *defaultValue) {
     value = convent2string(properties->get(key));
     if (isBlank(value)) {
-        // std::cout << "[Warn] " << key << " is empty, using default value[" << defaultValue << "]." << std::endl;
+        if (enableDebug) {
+            std::cout << "[DEBUG] " << key << " not found, use default value: "
+            << defaultValue << std::endl;
+        }
         value = defaultValue;
     }
 }
@@ -80,6 +86,22 @@ void checkNoRequired(Properties *properties, const char *key, std::string &value
  * @return 是否配置正确
  */
 bool checkCommonConfiguration(Properties *properties) {
+    // debug
+    std::string enableDebugStr;
+    checkNoRequired(properties, COMMON_DEBUG_ENABLE, enableDebugStr, "true");
+    if (enableDebugStr == "true") {
+        enableDebug = true;
+        std::cout << "[ INFO] enable debug." << std::endl;
+    } else if (enableDebugStr == "false") {
+        enableDebug = false;
+        std::cout << "[ INFO] disable debug." << std::endl;
+    } else {
+        std::cout << "[ERROR] " << COMMON_DEBUG_ENABLE
+                  << " cannot be " << enableDebugStr
+                  << "." << std::endl;
+        return false;
+    }
+
     // CATALINA_HOME
     bool envSuccess = checkEnv("CATALINA_HOME", properties, COMMON_TOMCAT_LOCATION, tomcatLocation);
     if (!envSuccess) {
@@ -87,7 +109,7 @@ bool checkCommonConfiguration(Properties *properties) {
     }
 
     if (!fileExist(tomcatLocation + TOMCAT_SERVER_XML)) {
-        std::cout << "[Error] it's not a tomcat home directory: " << tomcatLocation << std::endl;
+        std::cout << "[ERROR] it's not a tomcat home directory: " << tomcatLocation << std::endl;
         return false;
     }
 
@@ -109,15 +131,25 @@ bool checkCommonConfiguration(Properties *properties) {
     // JAVA_OPTS + common.java.options
     javaOptions = convent2string(getenv("JAVA_OPTS"));
     if (isBlank(javaOptions)) {
+        if (enableDebug) {
+            std::cout << "[DEBUG] environment variable JAVA_OPTS not found." << std::endl;
+        }
         checkNoRequired(properties, COMMON_JVM_OPTIONS, javaOptions, "");
         if (isBlank(javaOptions)) {
-            std::cout << "[Warn] JAVA_OPTS is empty, you can set JAVA_OPTS by environment variable JAVA_OPTS or "
+            if (enableDebug) {
+                std::cout << "[DEBUG] " << COMMON_JVM_OPTIONS << " not found." << std::endl;
+            }
+            std::cout << "[Warn] JVM options is empty, you can set it by environment variable JAVA_OPTS or "
                       << COMMON_JVM_OPTIONS << std::endl;
         }
     } else {
         std::string javaOptionsConf = convent2string(properties->get(COMMON_JVM_OPTIONS));
         if (!isBlank(javaOptionsConf)) {
             javaOptions.append(" ").append(javaOptionsConf);
+        } else {
+            if (enableDebug) {
+                std::cout << "[DEBUG] " << COMMON_JVM_OPTIONS << " not found." << std::endl;
+            }
         }
     }
     printKeyValue("JAVA_OPTS", javaOptions);
@@ -134,32 +166,34 @@ bool checkCommonConfiguration(Properties *properties) {
  */
 bool checkArguments(int argc, char *argv[], Properties *properties) {
     if (argc == 1) {
-        std::cout << "[Error] please enter the region of appFrame." << std::endl;
+        std::cout << "[ERROR] please enter the region of appFrame." << std::endl;
         return false;
     }
 
     if (argc > 2) {
-        std::cout << "[Error] too much arguments." << std::endl;
+        std::cout << "[ERROR] too much arguments." << std::endl;
         return false;
     }
 
     // key prefix
     std::string regionName = argv[1];
-
+    if (enableDebug) {
+        std::cout << "[DEBUG] region: " << regionName << std::endl;
+    }
     // appframe.war
     std::string warKey = regionName + APPFRAME_WAR_LOCATION;
     warFile = convent2string(properties->get(warKey.c_str()));
     if (isBlank(warFile)) {
-        std::cout << "[Error] .war file path is empty, it can be set by " << warKey << std::endl;
+        std::cout << "[ERROR] .war file path is empty, it can be set by " << warKey << std::endl;
         return false;
     }
     if (!fileExist(warFile)) {
-        std::cout << "[Error] file or directory not exist["
+        std::cout << "[ERROR] file or directory not exist["
                   << warFile << "], please check " << warKey << std::endl;
         return false;
     }
     if (isDirectory(warFile)) {
-        std::cout << "[Error] it's a directory: " << warFile << std::endl;
+        std::cout << "[ERROR] it's a directory: " << warFile << std::endl;
         return false;
     }
 
@@ -169,16 +203,16 @@ bool checkArguments(int argc, char *argv[], Properties *properties) {
     std::string bsHomeKey = regionName + APPFRAME_BSHOME_LOCATION;
     bsHomeDirectory = convent2string(properties->get(bsHomeKey.c_str()));
     if (isBlank(bsHomeDirectory)) {
-        std::cout << "[Error] BOSSSOFT_HOME not found, it can be set by " << bsHomeKey << "." << std::endl;
+        std::cout << "[ERROR] BOSSSOFT_HOME not found, it can be set by " << bsHomeKey << "." << std::endl;
         return false;
     }
     if (!fileExist(bsHomeDirectory)) {
-        std::cout << "[Error] file or directory not exist["
+        std::cout << "[ERROR] file or directory not exist["
                   << bsHomeDirectory << "], please check " << bsHomeKey << std::endl;
         return false;
     }
     if (!isDirectory(bsHomeDirectory)) {
-        std::cout << "[Error] it's not a directory: " << bsHomeDirectory << std::endl;
+        std::cout << "[ERROR] it's not a directory: " << bsHomeDirectory << std::endl;
         return false;
     }
 
@@ -259,11 +293,27 @@ bool generateVirtualTomcat(const std::string &region) {
     for (auto &confFileName : CONF_COPY_FILE) {
         std::string sourceConfFile = tomcatConf + confFileName;
         std::string targetConfFile = targetConf + confFileName;
+
+        if (enableDebug) {
+            std::cout << "[DEBUG] check file: " << targetConfFile << std::endl;
+        }
         // 文件不存在或文件不一致
-        if (!fileExist(targetConfFile) || !sameFile(sourceConfFile, targetConfFile)) {
+        if (!fileExist(targetConfFile)) {
+            if (enableDebug) {
+                std::cout << "[DEBUG] file not exist: " << targetConfFile << std::endl;
+            }
             // 复制文件
             if (!copyFile(sourceConfFile, targetConfFile)) {
-                std::cout << "[Error] copy file failed: " << confFileName;
+                std::cout << "[ERROR] copy file failed: " << confFileName;
+                return false;
+            }
+        } else if (!sameFile(sourceConfFile, targetConfFile)) {
+            if (enableDebug) {
+                std::cout << "[DEBUG] file was changed: " << sourceConfFile << std::endl;
+            }
+            // 复制文件
+            if (!copyFile(sourceConfFile, targetConfFile)) {
+                std::cout << "[ERROR] copy file failed: " << confFileName;
                 return false;
             }
         }
@@ -275,28 +325,34 @@ bool generateVirtualTomcat(const std::string &region) {
     std::string targetWarPath = targetWebapps + "appframe.war";
     // war包不存在
     if (!fileExist(targetWarPath)) {
+        if (enableDebug) {
+            std::cout << "[DEBUG] appframe package not exist: " << targetWebapps << std::endl;
+        }
         if (!copyFile(warFile, targetWebapps + "appframe.war")) {
-            std::cout << "[Error] copy appframe package failed: " << warFile;
+            std::cout << "[ERROR] copy appframe package failed: " << warFile;
             return false;
         }
     }
-    // war包存在但不相同
+        // war包存在但不相同
     else if (!sameFile(warFile, targetWarPath, aMd5, bMd5)) {
-        std::cout << "[Info] appframe file was changed." << std::endl;
+        std::cout << "[ INFO] appframe package was changed: " << warFile << std::endl;
         printKeyValue("\tSource War MD5", aMd5);
         printKeyValue("\tTarget War MD5", bMd5);
         if (!copyFile(warFile, targetWebapps + "appframe.war")) {
-            std::cout << "[Error] copy appframe package failed: " << warFile;
+            std::cout << "[ERROR] copy appframe package failed: " << warFile;
             return false;
         }
     }
 
     // create server.xml
-    std::string serverXml = generateServerXml(targetWebapps, tomcatShutdownPort, tomcatHttpPort);
     std::string targetServerXmlPath = targetDirectory + TOMCAT_SERVER_XML;
+    if (enableDebug) {
+        std::cout << "[DEBUG] create server.xml: " << targetServerXmlPath << std::endl;
+    }
+    std::string serverXml = generateServerXml(targetWebapps, tomcatShutdownPort, tomcatHttpPort);
     FILE *serverXmlFile = fopen(targetServerXmlPath.c_str(), "wb");
     if (serverXmlFile == nullptr) {
-        std::cout << "[Error] create server.xml failed." << std::endl;
+        std::cout << "[ERROR] create server.xml failed." << std::endl;
     }
     fwrite(serverXml.c_str(), 1, serverXml.length(), serverXmlFile);
     fclose(serverXmlFile);
@@ -351,8 +407,8 @@ int main(int argc, char *argv[]) {
 
     // run virtual tomcat
     std::string command = generateCommand(javaHome, tomcatLocation, targetDirectory, javaOptions, bsHomeDirectory);
-    std::cout << "GENERATED: " << command << std::endl << std::endl
+    std::cout << "[ INFO] COMMAND: " << command << std::endl << std::endl
               << "=========== VIRTUAL TOMCAT ===========" << std::endl;
-    system(command.c_str());
+    // system(command.c_str());
     return 0;
 }
