@@ -121,7 +121,7 @@ bool checkCommonConfiguration(Properties *properties) {
     std::string jreHome = convent2string(getenv("JRE_HOME"));
     if (!isBlank(jreHome)) {
         printKeyValue("JRE_HOME", jreHome);
-        std::cout << "[Warn] Tomcat uses the JRE_HOME in preference."
+        std::cout << "[WARN ] Tomcat uses the JRE_HOME in preference."
                   << "If you want to change Java version, please remove the JRE_HOME environment variable."
                   << std::endl;
     }
@@ -374,36 +374,45 @@ int main(int argc, char *argv[]) {
 #elif defined(UNIX) || defined(LINUX)
     getcwd(cwdDir, MAX_PATH_LENGTH);
 #endif
+
     programDirectory = std::string(cwdDir);
+
+    // 释放使用完的路径缓存
     delete[] cwdDir;
+
     printKeyValue("PROGRAM_HOME", programDirectory);
+
 #if defined(WINDOWS)
     programDirectory.append("\\");
 #elif defined(UNIX) || defined(LINUX)
     programDirectory.append("/");
 #endif
+
     std::string configFilePath = programDirectory + CONFIG_FILE;
     printKeyValue("CONFIG_FILE", configFilePath);
-    Properties properties(configFilePath.c_str());
+    auto *properties = new Properties(configFilePath.c_str());
 
-    if (!properties.isInitSuccess()) {
+    if (!properties->isInitSuccess()) {
         return 1;
     }
 
-    if (!checkCommonConfiguration(&properties)) {
+    if (!checkCommonConfiguration(properties)) {
         return 2;
     }
 
-    if (!checkArguments(argc, argv, &properties)) {
+    if (!checkArguments(argc, argv, properties)) {
         return 3;
     }
+
+    // 释放使用完毕的配置
+    delete properties;
 
     std::string regionName = argv[1];
     if (!generateVirtualTomcat(regionName)) {
         return 4;
     }
 
-    // run virtual tomcat
+    // 生成并运行 Tomcat 命令
     std::string command = generateCommand(javaHome, tomcatLocation, targetDirectory, javaOptions, bsHomeDirectory);
     std::cout << "[INFO ] COMMAND: " << command << std::endl << std::endl
               << "=========== VIRTUAL TOMCAT ===========" << std::endl;
