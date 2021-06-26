@@ -8,7 +8,7 @@ appframe-stater [region]
 
 ### Configuration
 
-- location: ./appframe-st ater.conf
+- location: ./appframe-starter.conf
 
 ```shell
 #default: true
