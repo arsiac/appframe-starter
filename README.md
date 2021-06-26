@@ -1,9 +1,9 @@
-# AppFrame-Stater
+# AppFrame-Starter
 
 ### Usage
 
 ```shell
-appframe-stater [region]
+appframe-starter [region]
 ```
 
 ### Configuration
