@@ -1,12 +1,15 @@
 # AppFrame-Stater
 
 ### Usage
+
 ```shell
 appframe-stater [region]
 ```
 
 ### Configuration
-- location: ./appframe-stater.conf
+
+- location: ./appframe-st ater.conf
+
 ```shell
 #default: true
 common.debug.enable=true
